@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB-JMeter
+    uid: influxdb-jmeter
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    editable: true
+    jsonData:
+      # InfluxQL (InfluxDB 1.x) — the query language the dashboard uses
+      dbName: jmeter
+      httpMode: GET
+      # Matches JMeter's backend_influxdb.send_interval (5 s)
+      timeInterval: 5s

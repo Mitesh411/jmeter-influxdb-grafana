@@ -1,0 +1,79 @@
+name: jmeter-monitoring
+
+services:
+  influxdb:
+    # Pinned to InfluxDB 1.x: JMeter's built-in InfluxdbBackendListenerClient
+    # writes to the 1.x /write?db=... endpoint. Do not use `latest` (it is InfluxDB 3).
+    image: influxdb:1.12.2
+    container_name: influxdb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      # Creates the database on first start (when the data volume is empty).
+      INFLUXDB_DB: ${INFLUXDB_DB:-jmeter}
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+      INFLUXDB_REPORTING_DISABLED: "true"
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+    healthcheck:
+      test: ["CMD-SHELL", "influx -execute 'SHOW DATABASES' | grep -q ${INFLUXDB_DB:-jmeter}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  grafana:
+    image: grafana/grafana:13.1.1
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  jmeter:
+    # Only runs on demand: `docker compose run --rm jmeter`
+    profiles: ["test"]
+    build: ./jmeter
+    image: jmeter-monitoring/jmeter:5.6.3
+    container_name: jmeter
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    volumes:
+      - ./jmeter/test-plans:/tests:ro
+      - ./results:/results
+    command:
+      - -n
+      - -f
+      - -t
+      - /tests/${TEST_PLAN:-blazedemo.jmx}
+      - -l
+      - /results/results.jtl
+      - -j
+      - /results/jmeter.log
+      - -e
+      - -o
+      - /results/html-report
+      - -Jjmeter.reportgenerator.temp_dir=/tmp/jmeter-report
+      - -Jthreads=${THREADS:-5}
+      - -Jrampup=${RAMPUP:-10}
+      - -Jduration=${DURATION:-120}
+      - -Jinfluxdb.url=http://influxdb:8086/write?db=${INFLUXDB_DB:-jmeter}
+      - -Japplication=${APPLICATION:-blazedemo}
+      - -JtestTitle=${TEST_TITLE:-BlazeDemo smoke load test}
+
+volumes:
+  influxdb-data:
+  grafana-data:
