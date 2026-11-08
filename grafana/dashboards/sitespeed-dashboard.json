@@ -1,0 +1,1885 @@
+{
+  "title": "Frontend performance (sitespeed.io)",
+  "uid": "sitespeed-influxdb",
+  "description": "Core Web Vitals, visual metrics and page weight per page from sitespeed.io (measurement 'sitespeed', written per iteration by sitespeed/plugins/influxdb).",
+  "tags": [
+    "performance",
+    "sitespeed"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "links": [
+    {
+      "title": "Performance dashboards",
+      "type": "dashboards",
+      "tags": [
+        "performance"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false
+    },
+    {
+      "title": "Jenkins",
+      "type": "link",
+      "url": "http://localhost:8080/job/performance-test/",
+      "targetBlank": true,
+      "icon": "external link",
+      "tooltip": "Start a test run"
+    },
+    {
+      "title": "HTML reports",
+      "type": "link",
+      "url": "http://localhost:8081/",
+      "targetBlank": true,
+      "icon": "doc",
+      "tooltip": "JMeter and sitespeed.io reports"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Frontend runs",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "enable": true,
+        "iconColor": "#1F60C4",
+        "query": "SELECT \"title\" FROM \"test_runs\" WHERE \"tool\" = 'sitespeed' AND \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND $timeFilter",
+        "textColumn": "title"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "influxdb",
+        "refresh": 1,
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "application",
+        "label": "Application",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"sitespeed\" WITH KEY = \"application\"",
+        "definition": "SHOW TAG VALUES FROM \"sitespeed\" WITH KEY = \"application\"",
+        "regex": "",
+        "refresh": 2,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "run",
+        "label": "Run",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"sitespeed\" WITH KEY = \"runId\" WHERE \"application\" =~ /^$application$/ AND $timeFilter",
+        "definition": "SHOW TAG VALUES FROM \"sitespeed\" WITH KEY = \"runId\" WHERE \"application\" =~ /^$application$/ AND $timeFilter",
+        "regex": "",
+        "refresh": 2,
+        "sort": 2,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "page",
+        "label": "Page",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"sitespeed\" WITH KEY = \"page\" WHERE \"application\" =~ /^$application$/",
+        "definition": "SHOW TAG VALUES FROM \"sitespeed\" WITH KEY = \"page\" WHERE \"application\" =~ /^$application$/",
+        "regex": "",
+        "refresh": 2,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "reports_url",
+        "type": "constant",
+        "query": "http://localhost:8081",
+        "hide": 2,
+        "current": {
+          "text": "http://localhost:8081",
+          "value": "http://localhost:8081"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "http://localhost:8081",
+            "value": "http://localhost:8081"
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Largest Contentful Paint",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 2500
+              },
+              {
+                "color": "red",
+                "value": 4000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"largestContentfulPaint\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median over the selected pages, runs and iterations.",
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "First Contentful Paint",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1800
+              },
+              {
+                "color": "red",
+                "value": 3000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"firstContentfulPaint\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median over the selected pages, runs and iterations.",
+      "id": 2,
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Time to first byte",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 800
+              },
+              {
+                "color": "red",
+                "value": 1800
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"ttfb\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median over the selected pages, runs and iterations.",
+      "id": 3,
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Speed Index",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 3400
+              },
+              {
+                "color": "red",
+                "value": 5800
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"speedIndex\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median over the selected pages, runs and iterations.",
+      "id": 4,
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Cumulative Layout Shift",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 3,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.25
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"cumulativeLayoutShift\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median over the selected pages, runs and iterations.",
+      "id": 5,
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Total Blocking Time",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"totalBlockingTime\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median over the selected pages, runs and iterations.",
+      "id": 6,
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Page weight",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"transferSize\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "Median transfer size per page.",
+      "id": 7,
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Requests per page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"requests\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "id": 8,
+      "gridPos": {
+        "x": 4,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Coach score",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"coachScore\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "description": "sitespeed.io Coach performance advice score (0-100).",
+      "id": 9,
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Page loads",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT count(\"largestContentfulPaint\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "id": 10,
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Failed page loads",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"errors\") FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter"
+        }
+      ],
+      "id": 11,
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Runs",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT count(\"status\") FROM \"test_runs\" WHERE \"tool\" = 'sitespeed' AND \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND $timeFilter"
+        }
+      ],
+      "id": 12,
+      "gridPos": {
+        "x": 20,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Largest Contentful Paint by page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "drawStyle": "line",
+            "showPoints": "always"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "median",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT \"largestContentfulPaint\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\"",
+          "alias": "$tag_page"
+        }
+      ],
+      "description": "One point per page load (iteration).",
+      "id": 13,
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "First Contentful Paint by page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "drawStyle": "line",
+            "showPoints": "always"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "median",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT \"firstContentfulPaint\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\"",
+          "alias": "$tag_page"
+        }
+      ],
+      "description": "One point per page load (iteration).",
+      "id": 14,
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Time to first byte by page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "drawStyle": "line",
+            "showPoints": "always"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "median",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT \"ttfb\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\"",
+          "alias": "$tag_page"
+        }
+      ],
+      "description": "One point per page load (iteration).",
+      "id": 15,
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Speed Index by page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "drawStyle": "line",
+            "showPoints": "always"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "median",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT \"speedIndex\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\"",
+          "alias": "$tag_page"
+        }
+      ],
+      "description": "One point per page load (iteration).",
+      "id": 16,
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Total Blocking Time by page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "drawStyle": "line",
+            "showPoints": "always"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "median",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT \"totalBlockingTime\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\"",
+          "alias": "$tag_page"
+        }
+      ],
+      "description": "One point per page load (iteration).",
+      "id": 17,
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Cumulative Layout Shift by page",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "drawStyle": "line",
+            "showPoints": "always"
+          },
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "median",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT \"cumulativeLayoutShift\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\"",
+          "alias": "$tag_page"
+        }
+      ],
+      "description": "One point per page load (iteration).",
+      "id": 18,
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "table",
+      "title": "Pages (click a page for its sitespeed.io report: waterfall, video, HAR)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(LCP|FCP|TTFB|Speed Index|TBT|Fully loaded)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CLS"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Transfer size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Coach score"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Errors"
+            },
+            "properties": [
+              {
+                "id": "noValue",
+                "value": "0"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "report"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "page"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Page"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open sitespeed.io page report (latest run)",
+                    "url": "${reports_url}/${__data.fields.report}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT median(\"largestContentfulPaint\") AS \"LCP\", median(\"firstContentfulPaint\") AS \"FCP\", median(\"ttfb\") AS \"TTFB\", median(\"speedIndex\") AS \"Speed Index\", median(\"cumulativeLayoutShift\") AS \"CLS\", median(\"totalBlockingTime\") AS \"TBT\", median(\"fullyLoaded\") AS \"Fully loaded\", median(\"transferSize\") AS \"Transfer size\", median(\"requests\") AS \"Requests\", median(\"coachScore\") AS \"Coach score\", sum(\"errors\") AS \"Errors\", last(\"report\") AS \"report\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ],
+      "description": "Medians over the selected runs and iterations. The link opens the page report of the latest selected run.",
+      "id": 19,
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 7
+      }
+    },
+    {
+      "type": "table",
+      "title": "Page weight by content type",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "unit": "decbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Third-party requests|Domains)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "page"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Page"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT median(\"htmlTransferSize\") AS \"HTML\", median(\"cssTransferSize\") AS \"CSS\", median(\"javascriptTransferSize\") AS \"JavaScript\", median(\"imageTransferSize\") AS \"Images\", median(\"fontTransferSize\") AS \"Fonts\", median(\"thirdPartyTransferSize\") AS \"Third party (all types)\", median(\"thirdPartyRequests\") AS \"Third-party requests\", median(\"domains\") AS \"Domains\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter GROUP BY \"page\""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ],
+      "id": 20,
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 6
+      }
+    },
+    {
+      "type": "table",
+      "title": "Page loads (click a run for the page report)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "runId"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Run"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open sitespeed.io page report",
+                    "url": "${reports_url}/${__data.fields.report}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "page"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Page"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "iteration"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Iteration"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mainDocumentStatus"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "HTTP status"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 400
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "largestContentfulPaint"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "LCP"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "firstContentfulPaint"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "FCP"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ttfb"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "TTFB"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "speedIndex"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Speed Index"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cumulativeLayoutShift"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "CLS"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "totalBlockingTime"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "TBT"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "transferSize"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Transfer size"
+              },
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "requests"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Requests"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "errors"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Errors"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "errorMessages"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Error messages"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "report"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"runId\"::tag, \"page\"::tag, \"iteration\", \"mainDocumentStatus\", \"largestContentfulPaint\", \"firstContentfulPaint\", \"ttfb\", \"speedIndex\", \"cumulativeLayoutShift\", \"totalBlockingTime\", \"transferSize\", \"requests\", \"errors\", \"errorMessages\", \"report\" FROM \"sitespeed\" WHERE \"application\" =~ /^$application$/ AND \"runId\" =~ /^$run$/ AND \"page\" =~ /^$page$/ AND $timeFilter ORDER BY time DESC LIMIT 300"
+        }
+      ],
+      "id": 21,
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 9
+      }
+    }
+  ]
+}

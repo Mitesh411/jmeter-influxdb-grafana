@@ -1,0 +1,655 @@
+{
+  "title": "Request trace",
+  "uid": "request-trace",
+  "description": "Full request and response of one failed JMeter sample (measurement 'failures'). Opened from the Failed requests tables.",
+  "tags": [
+    "performance",
+    "jmeter"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "links": [
+    {
+      "title": "Performance dashboards",
+      "type": "dashboards",
+      "tags": [
+        "performance"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false
+    },
+    {
+      "title": "Jenkins",
+      "type": "link",
+      "url": "http://localhost:8080/job/performance-test/",
+      "targetBlank": true,
+      "icon": "external link",
+      "tooltip": "Start a test run"
+    },
+    {
+      "title": "HTML reports",
+      "type": "link",
+      "url": "http://localhost:8081/",
+      "targetBlank": true,
+      "icon": "doc",
+      "tooltip": "JMeter and sitespeed.io reports"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "influxdb",
+        "refresh": 1,
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "sample",
+        "label": "Trace id (sample)",
+        "type": "textbox",
+        "query": "",
+        "hide": 0,
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "name": "run",
+        "label": "Run",
+        "type": "textbox",
+        "query": "",
+        "hide": 0,
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Failed request",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "-",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Elapsed|Latency|Connect)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Received|Sent)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Response code"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Transaction|Response code|Message|Elapsed|Latency|Connect|Received|Sent)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"transaction\"::tag AS \"Transaction\", \"responseCode\"::tag AS \"Response code\", \"responseMessage\" AS \"Message\", \"elapsed\" AS \"Elapsed\", \"latency\" AS \"Latency\", \"connect\" AS \"Connect\", \"receivedBytes\" AS \"Received\", \"sentBytes\" AS \"Sent\" FROM \"failures\" WHERE \"sampleId\" = '$sample'"
+        }
+      ],
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      }
+    },
+    {
+      "type": "table",
+      "title": "Failure",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "inspect": true,
+            "wrapText": true,
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": true
+            }
+          },
+          "noValue": "Trace not found: open it from the Failed requests table"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Field"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"failureMessage\" AS \"Assertion / error\", \"redirects\" AS \"Redirects\" FROM \"failures\" WHERE \"sampleId\" = '$sample'"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Field",
+            "restFieldsName": "Value"
+          }
+        }
+      ],
+      "description": "Failed assertions (name: message) or the HTTP status, and the redirect chain if any.",
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 5
+      }
+    },
+    {
+      "type": "table",
+      "title": "Request",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "inspect": true,
+            "wrapText": true,
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": true
+            }
+          },
+          "noValue": "Trace not found: open it from the Failed requests table"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Field"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"method\" AS \"Method\", \"url\" AS \"URL\", \"requestHeaders\" AS \"Headers\", \"requestData\" AS \"Request (JMeter sampler data)\" FROM \"failures\" WHERE \"sampleId\" = '$sample'"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Field",
+            "restFieldsName": "Value"
+          }
+        }
+      ],
+      "id": 3,
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 12
+      }
+    },
+    {
+      "type": "table",
+      "title": "Response",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "inspect": true,
+            "wrapText": true,
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": true
+            }
+          },
+          "noValue": "Trace not found: open it from the Failed requests table"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Field"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"responseCode\" AS \"Status\", \"responseMessage\" AS \"Message\", \"responseHeaders\" AS \"Headers\", \"responseBody\" AS \"Body\" FROM \"failures\" WHERE \"sampleId\" = '$sample'"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Field",
+            "restFieldsName": "Value"
+          }
+        }
+      ],
+      "description": "Bodies are truncated to failureTrace.bodyChars (default 10000) characters. Use the eye icon on a cell to see a value in full.",
+      "id": 4,
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 12
+      }
+    },
+    {
+      "type": "table",
+      "title": "Context",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "inspect": true,
+            "wrapText": true,
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": true
+            }
+          },
+          "noValue": "Trace not found: open it from the Failed requests table"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Field"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"sampleId\" AS \"Trace id (sample)\", \"runId\"::tag AS \"Run\", \"application\"::tag AS \"Application\", \"threadName\" AS \"JMeter thread\", \"traceId\" AS \"W3C trace id\" FROM \"failures\" WHERE \"sampleId\" = '$sample'"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Field",
+            "restFieldsName": "Value"
+          }
+        }
+      ],
+      "description": "The W3C trace id was sent in the traceparent header. If the backend is instrumented with OpenTelemetry, search for it in your tracing tool.",
+      "id": 5,
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 6
+      }
+    },
+    {
+      "type": "table",
+      "title": "Other failed requests in this run",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "No other failures"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sampleId"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Trace"
+              },
+              {
+                "id": "custom.width",
+                "value": 160
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open request trace",
+                    "url": "/d/request-trace?var-sample=${__value.raw}&var-run=$run&${DS:queryparam}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "transaction"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Transaction"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "responseCode"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Code"
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failureMessage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Failure"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "elapsed"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Elapsed"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"sampleId\", \"transaction\"::tag, \"responseCode\"::tag, \"failureMessage\", \"elapsed\" FROM \"failures\" WHERE \"runId\" = '$run' ORDER BY time DESC LIMIT 200"
+        }
+      ],
+      "id": 6,
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 9
+      }
+    }
+  ]
+}

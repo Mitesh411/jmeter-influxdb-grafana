@@ -1,0 +1,3417 @@
+{
+  "title": "Run comparison",
+  "uid": "run-comparison",
+  "description": "Compares two test runs (JMeter and/or sitespeed.io) by run id. The time range only limits which runs are listed.",
+  "tags": [
+    "performance",
+    "jmeter",
+    "sitespeed"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "links": [
+    {
+      "title": "Performance dashboards",
+      "type": "dashboards",
+      "tags": [
+        "performance"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false
+    },
+    {
+      "title": "Jenkins",
+      "type": "link",
+      "url": "http://localhost:8080/job/performance-test/",
+      "targetBlank": true,
+      "icon": "external link",
+      "tooltip": "Start a test run"
+    },
+    {
+      "title": "HTML reports",
+      "type": "link",
+      "url": "http://localhost:8081/",
+      "targetBlank": true,
+      "icon": "doc",
+      "tooltip": "JMeter and sitespeed.io reports"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "influxdb",
+        "refresh": 1,
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "baseline",
+        "label": "Baseline run",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"runId\" WHERE $timeFilter",
+        "definition": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"runId\" WHERE $timeFilter",
+        "regex": "",
+        "refresh": 2,
+        "sort": 2,
+        "multi": false,
+        "includeAll": false,
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "candidate",
+        "label": "Candidate run",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"runId\" WHERE $timeFilter",
+        "definition": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"runId\" WHERE $timeFilter",
+        "regex": "",
+        "refresh": 2,
+        "sort": 2,
+        "multi": false,
+        "includeAll": false,
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "reports_url",
+        "type": "constant",
+        "query": "http://localhost:8081",
+        "hide": 2,
+        "current": {
+          "text": "http://localhost:8081",
+          "value": "http://localhost:8081"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "http://localhost:8081",
+            "value": "http://localhost:8081"
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Backend (JMeter)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Average response time",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"avg\") FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"avg\") FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "95th percentile",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"pct95.0\") FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"pct95.0\") FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Average of the p95 values JMeter reports every 5 s.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 3,
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Throughput",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 2
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": -0.2
+                    },
+                    {
+                      "color": "green",
+                      "value": -0.05
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"count\") / (count(\"count\") * 5) FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"count\") / (count(\"count\") * 5) FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Requests per second over the run (samples / reporting time).",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 4,
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Error rate",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Δ"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change (pp)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"countError\") / sum(\"count\") * 100 FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"countError\") / sum(\"count\") * 100 FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Change is in percentage points.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "id": 5,
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "type": "trend",
+      "title": "Average response time over the run",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "description": "Both runs on one axis: x = seconds since the run's first 10 s bucket with data, so runs started at different times line up.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Elapsed (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "Elapsed (s)",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"avg\") FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter GROUP BY time(10s) fill(none)",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"avg\") FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter GROUP BY time(10s) fill(none)",
+          "alias": "Candidate"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "index",
+            "alias": "Bucket",
+            "index": {
+              "asPercentile": false
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Elapsed (s)",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Bucket"
+                }
+              },
+              "operator": "*",
+              "right": {
+                "fixed": 10
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Bucket": true
+            }
+          }
+        }
+      ],
+      "id": 6,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "trend",
+      "title": "Throughput over the run",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "description": "Both runs on one axis: x = seconds since the run's first 10 s bucket with data, so runs started at different times line up.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Elapsed (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "Elapsed (s)",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"count\") / 10 FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter GROUP BY time(10s) fill(none)",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"count\") / 10 FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter GROUP BY time(10s) fill(none)",
+          "alias": "Candidate"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "index",
+            "alias": "Bucket",
+            "index": {
+              "asPercentile": false
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Elapsed (s)",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Bucket"
+                }
+              },
+              "operator": "*",
+              "right": {
+                "fixed": 10
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Bucket": true
+            }
+          }
+        }
+      ],
+      "id": 7,
+      "gridPos": {
+        "x": 8,
+        "y": 6,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "trend",
+      "title": "Error rate over the run",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "description": "Both runs on one axis: x = seconds since the run's first 10 s bucket with data, so runs started at different times line up.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Elapsed (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "Elapsed (s)",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"countError\") / sum(\"count\") * 100 FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$baseline' AND $timeFilter GROUP BY time(10s) fill(none)",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"countError\") / sum(\"count\") * 100 FROM \"jmeter\" WHERE \"transaction\" = 'all' AND \"statut\" = 'all' AND \"runId\" = '$candidate' AND $timeFilter GROUP BY time(10s) fill(none)",
+          "alias": "Candidate"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "index",
+            "alias": "Bucket",
+            "index": {
+              "asPercentile": false
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Elapsed (s)",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Bucket"
+                }
+              },
+              "operator": "*",
+              "right": {
+                "fixed": 10
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Bucket": true
+            }
+          }
+        }
+      ],
+      "id": 8,
+      "gridPos": {
+        "x": 16,
+        "y": 6,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "table",
+      "title": "Transactions: baseline vs candidate",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Avg|p95|Δ avg|Δ p95).*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Δ .*"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "text",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Errors.*"
+            },
+            "properties": [
+              {
+                "id": "noValue",
+                "value": "0"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Transaction",
+            "desc": false
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT sum(\"count\") AS \"Samples (base)\", mean(\"avg\") AS \"Avg (base)\", mean(\"pct95.0\") AS \"p95 (base)\" FROM \"jmeter\" WHERE \"statut\" = 'all' AND \"transaction\" !~ /^(all|internal)$/ AND \"runId\" = '$baseline' AND $timeFilter GROUP BY \"transaction\""
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT sum(\"count\") AS \"Samples (cand)\", mean(\"avg\") AS \"Avg (cand)\", mean(\"pct95.0\") AS \"p95 (cand)\" FROM \"jmeter\" WHERE \"statut\" = 'all' AND \"transaction\" !~ /^(all|internal)$/ AND \"runId\" = '$candidate' AND $timeFilter GROUP BY \"transaction\""
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT sum(\"count\") AS \"Errors (base)\" FROM \"jmeter\" WHERE \"statut\" = 'ko' AND \"runId\" = '$baseline' AND $timeFilter GROUP BY \"transaction\""
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT sum(\"count\") AS \"Errors (cand)\" FROM \"jmeter\" WHERE \"statut\" = 'ko' AND \"runId\" = '$candidate' AND $timeFilter GROUP BY \"transaction\""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "transaction",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ avg",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Avg (cand)"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Avg (base)"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ p95",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p95 (cand)"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p95 (base)"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Time 4": true
+            },
+            "indexByName": {
+              "transaction": 0,
+              "Samples (base)": 1,
+              "Samples (cand)": 2,
+              "Avg (base)": 3,
+              "Avg (cand)": 4,
+              "Δ avg": 5,
+              "p95 (base)": 6,
+              "p95 (cand)": 7,
+              "Δ p95": 8,
+              "Errors (base)": 9,
+              "Errors (cand)": 10
+            },
+            "renameByName": {
+              "transaction": "Transaction"
+            }
+          }
+        }
+      ],
+      "description": "Positive Δ (red) = candidate slower than baseline. Errors are failed samples.",
+      "id": 9,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 8
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "95th percentile by transaction",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0,
+          "custom": {
+            "fillOpacity": 80
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "transaction",
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "groupWidth": 0.7,
+        "barWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT mean(\"pct95.0\") AS \"Baseline\" FROM \"jmeter\" WHERE \"statut\" = 'all' AND \"transaction\" !~ /^(all|internal)$/ AND \"runId\" = '$baseline' AND $timeFilter GROUP BY \"transaction\""
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT mean(\"pct95.0\") AS \"Candidate\" FROM \"jmeter\" WHERE \"statut\" = 'all' AND \"transaction\" !~ /^(all|internal)$/ AND \"runId\" = '$candidate' AND $timeFilter GROUP BY \"transaction\""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "transaction",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true
+            }
+          }
+        }
+      ],
+      "id": 10,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      }
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Frontend (sitespeed.io)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Largest Contentful Paint",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"largestContentfulPaint\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"largestContentfulPaint\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Median over all pages and iterations of the run.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 4,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "First Contentful Paint",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"firstContentfulPaint\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"firstContentfulPaint\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Median over all pages and iterations of the run.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 13,
+      "gridPos": {
+        "x": 4,
+        "y": 31,
+        "w": 4,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Time to first byte",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"ttfb\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"ttfb\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Median over all pages and iterations of the run.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 14,
+      "gridPos": {
+        "x": 8,
+        "y": 31,
+        "w": 4,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Speed Index",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"speedIndex\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"speedIndex\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Median over all pages and iterations of the run.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 15,
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 4,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Total Blocking Time",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"totalBlockingTime\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"totalBlockingTime\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Median over all pages and iterations of the run.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 16,
+      "gridPos": {
+        "x": 16,
+        "y": 31,
+        "w": 4,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Page weight",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.05
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Change"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^(Baseline|Candidate|Change.*)$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"transferSize\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$baseline' AND $timeFilter",
+          "alias": "Baseline"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT median(\"transferSize\") FROM \"sitespeed\" WHERE \"page\" =~ /.*/ AND \"runId\" = '$candidate' AND $timeFilter",
+          "alias": "Candidate"
+        }
+      ],
+      "description": "Median over all pages and iterations of the run.",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Candidate"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Change",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Δ"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Baseline"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Δ": true
+            }
+          }
+        }
+      ],
+      "id": 17,
+      "gridPos": {
+        "x": 20,
+        "y": 31,
+        "w": 4,
+        "h": 5
+      }
+    },
+    {
+      "type": "table",
+      "title": "Pages: baseline vs candidate",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(LCP|FCP|TTFB|SI|Δ).*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Size.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Δ .*"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "text",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "report"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "page"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Page"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open the candidate's sitespeed.io page report",
+                    "url": "${reports_url}/${__data.fields.report}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT median(\"largestContentfulPaint\") AS \"LCP (base)\", median(\"firstContentfulPaint\") AS \"FCP (base)\", median(\"ttfb\") AS \"TTFB (base)\", median(\"speedIndex\") AS \"SI (base)\", median(\"transferSize\") AS \"Size (base)\" FROM \"sitespeed\" WHERE \"runId\" = '$baseline' AND $timeFilter GROUP BY \"page\""
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT median(\"largestContentfulPaint\") AS \"LCP (cand)\", median(\"firstContentfulPaint\") AS \"FCP (cand)\", median(\"ttfb\") AS \"TTFB (cand)\", median(\"speedIndex\") AS \"SI (cand)\", median(\"transferSize\") AS \"Size (cand)\", last(\"report\") AS \"report\" FROM \"sitespeed\" WHERE \"runId\" = '$candidate' AND $timeFilter GROUP BY \"page\""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "page",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ LCP",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "LCP (cand)"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "LCP (base)"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Δ SI",
+            "replaceFields": false,
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "SI (cand)"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "SI (base)"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true
+            },
+            "indexByName": {
+              "page": 0,
+              "LCP (base)": 1,
+              "LCP (cand)": 2,
+              "Δ LCP": 3,
+              "FCP (base)": 4,
+              "FCP (cand)": 5,
+              "TTFB (base)": 6,
+              "TTFB (cand)": 7,
+              "SI (base)": 8,
+              "SI (cand)": 9,
+              "Δ SI": 10,
+              "Size (base)": 11,
+              "Size (cand)": 12
+            }
+          }
+        }
+      ],
+      "description": "Medians per page. Positive Δ (red) = candidate slower. Click a page for the candidate's page report.",
+      "id": 18,
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 7
+      }
+    },
+    {
+      "id": 19,
+      "type": "row",
+      "title": "Runs",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Selected runs",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "passed": {
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "color": "red",
+                        "index": 1
+                      },
+                      "error": {
+                        "color": "red",
+                        "index": 2
+                      },
+                      "running": {
+                        "color": "blue",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "durationSec"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Duration"
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "errorPct"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Error %"
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "report"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Report"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open HTML report",
+                    "url": "${reports_url}/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Started"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "runId"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Run"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tool"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Tool"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "application"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Application"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "title"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Title"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "samples"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Requests"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pages"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Pages"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Started",
+            "desc": false
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"status\", \"title\", \"durationSec\", \"samples\", \"errorPct\", \"pages\", \"report\" FROM \"test_runs\" WHERE (\"runId\" = '$baseline' OR \"runId\" = '$candidate') AND $timeFilter GROUP BY \"runId\", \"tool\", \"application\""
+        }
+      ],
+      "id": 20,
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 24,
+        "h": 6
+      }
+    }
+  ]
+}

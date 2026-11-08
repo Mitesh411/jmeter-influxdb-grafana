@@ -1,0 +1,924 @@
+{
+  "title": "Performance overview",
+  "uid": "perf-overview",
+  "description": "All test runs (JMeter and sitespeed.io) with links to their live dashboards, HTML reports and comparisons.",
+  "tags": [
+    "performance"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "links": [
+    {
+      "title": "Performance dashboards",
+      "type": "dashboards",
+      "tags": [
+        "performance"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false
+    },
+    {
+      "title": "Jenkins",
+      "type": "link",
+      "url": "http://localhost:8080/job/performance-test/",
+      "targetBlank": true,
+      "icon": "external link",
+      "tooltip": "Start a test run"
+    },
+    {
+      "title": "HTML reports",
+      "type": "link",
+      "url": "http://localhost:8081/",
+      "targetBlank": true,
+      "icon": "doc",
+      "tooltip": "JMeter and sitespeed.io reports"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Test runs",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "enable": true,
+        "iconColor": "#8F3BB8",
+        "query": "SELECT \"title\" FROM \"test_runs\" WHERE \"application\" =~ /^$application$/ AND \"tool\" =~ /^$tool$/ AND $timeFilter",
+        "textColumn": "title"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "influxdb",
+        "refresh": 1,
+        "hide": 0,
+        "current": {}
+      },
+      {
+        "name": "application",
+        "label": "Application",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"application\"",
+        "definition": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"application\"",
+        "regex": "",
+        "refresh": 2,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "tool",
+        "label": "Tool",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS}"
+        },
+        "query": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"tool\"",
+        "definition": "SHOW TAG VALUES FROM \"test_runs\" WITH KEY = \"tool\"",
+        "regex": "",
+        "refresh": 2,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "reports_url",
+        "type": "constant",
+        "query": "http://localhost:8081",
+        "hide": 2,
+        "current": {
+          "text": "http://localhost:8081",
+          "value": "http://localhost:8081"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "http://localhost:8081",
+            "value": "http://localhost:8081"
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "**Start a test** in [Jenkins](http://localhost:8080/job/performance-test/build) or with `docker compose run --rm jmeter` / `docker compose run --rm sitespeed`. Watch it live on the [backend](/d/jmeter-influxdb) or [frontend](/d/sitespeed-influxdb) dashboard. Pick two runs on [Run comparison](/d/run-comparison). Click a run id below for its dashboards and report."
+      },
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 2
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Runs",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT count(\"status\") FROM \"test_runs\" WHERE \"application\" =~ /^$application$/ AND \"tool\" =~ /^$tool$/ AND $timeFilter"
+        }
+      ],
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Failed runs",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT count(\"status\") FROM \"test_runs\" WHERE \"application\" =~ /^$application$/ AND \"tool\" =~ /^$tool$/ AND (\"status\" = 'failed' OR \"status\" = 'error') AND $timeFilter"
+        }
+      ],
+      "description": "Runs with status failed (error threshold exceeded, page errors) or error (the tool failed).",
+      "id": 3,
+      "gridPos": {
+        "x": 6,
+        "y": 2,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Backend requests",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT sum(\"count\") FROM \"jmeter\" WHERE \"application\" =~ /^$application$/ AND \"transaction\" = 'all' AND \"statut\" = 'all' AND $timeFilter"
+        }
+      ],
+      "id": 4,
+      "gridPos": {
+        "x": 12,
+        "y": 2,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Failed requests traced",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "orientation": "auto",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT count(\"elapsed\") FROM \"failures\" WHERE \"application\" =~ /^$application$/ AND $timeFilter"
+        }
+      ],
+      "id": 5,
+      "gridPos": {
+        "x": 18,
+        "y": 2,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "type": "table",
+      "title": "Test runs (click a run id for its dashboard, report or comparison)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Started"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "runId"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Run"
+              },
+              {
+                "id": "custom.width",
+                "value": 260
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Live dashboard for this run",
+                    "url": "/d/${__data.fields.tool}-influxdb?var-run=${__value.raw}&var-application=${__data.fields.application}&from=${__value.time}&to=${__data.fields.endTime}&refresh=&${DS:queryparam}",
+                    "targetBlank": false
+                  },
+                  {
+                    "title": "Compare: this run as candidate",
+                    "url": "/d/run-comparison?var-candidate=${__value.raw}&${DS:queryparam}",
+                    "targetBlank": false
+                  },
+                  {
+                    "title": "HTML report",
+                    "url": "${reports_url}/${__data.fields.report}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tool"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Tool"
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "application"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Application"
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "passed": {
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "color": "red",
+                        "index": 1
+                      },
+                      "error": {
+                        "color": "red",
+                        "index": 2
+                      },
+                      "running": {
+                        "color": "blue",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "title"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Title"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "durationSec"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Duration"
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "samples"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Requests"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "errorPct"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Error %"
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pages"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Pages"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "errors"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Page errors"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "endTime"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "report"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Started",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"status\", \"title\", \"durationSec\", \"samples\", \"errorPct\", \"pages\", \"errors\", \"endTime\", \"report\" FROM \"test_runs\" WHERE \"application\" =~ /^$application$/ AND \"tool\" =~ /^$tool$/ AND $timeFilter GROUP BY \"runId\", \"tool\", \"application\""
+        }
+      ],
+      "id": 6,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 12
+      }
+    },
+    {
+      "type": "table",
+      "title": "Latest failed requests (click for the request trace)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "No failed requests"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sampleId"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Trace"
+              },
+              {
+                "id": "custom.width",
+                "value": 230
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open request trace",
+                    "url": "/d/request-trace?var-sample=${__value.raw}&var-run=${__data.fields.runId}&${DS:queryparam}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "runId"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Run"
+              },
+              {
+                "id": "custom.width",
+                "value": 230
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "transaction"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Transaction"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "responseCode"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Code"
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failureMessage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Failure"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "url"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "URL"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS}"
+          },
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT \"sampleId\", \"runId\"::tag, \"transaction\"::tag, \"responseCode\"::tag, \"failureMessage\", \"url\" FROM \"failures\" WHERE \"application\" =~ /^$application$/ AND $timeFilter ORDER BY time DESC LIMIT 100"
+        }
+      ],
+      "id": 7,
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 9
+      }
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+// Performance test pipeline (job "performance-test", created by casc.yaml).
+//
+// Runs JMeter (backend load) and/or sitespeed.io (frontend) in containers next to the stack.
+// Both tools tag every metric with the same run id, so the run can be watched live in Grafana
+// and compared with earlier runs on the "Run comparison" dashboard.
+//
+// Job parameters (TEST_TYPE, TEST_PLAN, THREADS, ...) are defined in casc.yaml.
+//
+// Exit codes from jmeter/run-test.sh: 0 passed, 2 error % above MAX_ERROR_PCT (build UNSTABLE),
+// anything else = the tool itself failed (build FAILURE).
+
+def runTool(String tool) {
+    int rc = sh(returnStatus: true, script: "bash /project/jenkins/run-test-container.sh ${tool}")
+    if (rc == 2) {
+        unstable("${tool}: error rate above MAX_ERROR_PCT=${params.MAX_ERROR_PCT}%")
+    } else if (rc != 0) {
+        error("${tool} exited with code ${rc}")
+    }
+}
+
+pipeline {
+    agent any
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '50'))
+    }
+    stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    String label = params.RUN_LABEL.replaceAll('[^A-Za-z0-9._-]', '_')
+                    env.RUN_ID = sh(returnStdout: true, script: 'date -u +%Y%m%d-%H%M%S').trim() + "-b${env.BUILD_NUMBER}" + (label ? "-${label}" : '')
+                    currentBuild.displayName = "#${env.BUILD_NUMBER} ${params.TEST_TYPE} ${env.RUN_ID}"
+                    echo "Run id: ${env.RUN_ID}"
+                    echo "Live dashboards: ${env.GRAFANA_PUBLIC_URL}/d/perf-overview"
+                }
+            }
+        }
+        stage('Test') {
+            parallel {
+                stage('Backend (JMeter)') {
+                    when { expression { params.TEST_TYPE in ['backend', 'both'] } }
+                    steps { script { runTool('jmeter') } }
+                }
+                stage('Frontend (sitespeed.io)') {
+                    when { expression { params.TEST_TYPE in ['frontend', 'both'] } }
+                    steps {
+                        script {
+                            // While JMeter ramps up, wait so the frontend is measured under load.
+                            if (params.TEST_TYPE == 'both') {
+                                sleep(time: Integer.parseInt(params.RAMPUP), unit: 'SECONDS')
+                            }
+                            runTool('sitespeed')
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                String grafana = env.GRAFANA_PUBLIC_URL
+                String reports = env.REPORTS_PUBLIC_URL
+                List links = ["<a href='${grafana}/d/run-comparison?var-candidate=${env.RUN_ID}'>Compare in Grafana</a>"]
+                if (params.TEST_TYPE in ['backend', 'both']) {
+                    links << "<a href='${grafana}/d/jmeter-influxdb?var-run=${env.RUN_ID}&from=now-3h&to=now'>Backend dashboard</a>"
+                    links << "<a href='${reports}/jmeter/${env.RUN_ID}/html-report/index.html'>JMeter report</a>"
+                    sh "mkdir -p artifacts && cp -r /results/jmeter/${env.RUN_ID} artifacts/jmeter || true"
+                }
+                if (params.TEST_TYPE in ['frontend', 'both']) {
+                    links << "<a href='${grafana}/d/sitespeed-influxdb?var-run=${env.RUN_ID}&from=now-3h&to=now'>Frontend dashboard</a>"
+                    links << "<a href='${reports}/sitespeed/${env.RUN_ID}/index.html'>sitespeed.io report</a>"
+                }
+                currentBuild.description = "Run <b>${env.RUN_ID}</b>: " + links.join(' | ')
+                archiveArtifacts(artifacts: 'artifacts/**', allowEmptyArchive: true)
+                sh 'rm -rf artifacts'
+            }
+        }
+    }
+}

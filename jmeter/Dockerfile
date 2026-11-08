@@ -14,10 +14,10 @@ RUN apt-get update \
  && tar -xzf /tmp/jmeter.tgz -C /opt \
  && mv "/opt/apache-jmeter-${JMETER_VERSION}" "${JMETER_HOME}" \
  && rm -f /tmp/jmeter.tgz \
- && apt-get purge -y curl \
- && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/*
 
+# curl stays installed: run-test.sh uses it to record runs in InfluxDB.
+COPY --chmod=755 run-test.sh /usr/local/bin/run-test.sh
+
 WORKDIR /tests
-ENTRYPOINT ["jmeter"]
-CMD ["--version"]
+ENTRYPOINT ["run-test.sh"]
