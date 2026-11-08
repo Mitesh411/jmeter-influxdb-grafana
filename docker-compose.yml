@@ -1,5 +1,9 @@
 name: jmeter-monitoring
 
+# Performance testing stack:
+#   always on:  influxdb, grafana, jenkins, reports (HTML report server), demo-api (sample REST API)
+#   on demand:  jmeter, sitespeed   (profile "test": `docker compose run --rm jmeter|sitespeed`)
+
 services:
   influxdb:
     # Pinned to InfluxDB 1.x: JMeter's built-in InfluxdbBackendListenerClient
@@ -37,43 +41,120 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/performance-overview.json
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  reports:
+    # Static file server for ./results: JMeter HTML reports and sitespeed.io reports.
+    image: nginx:1.30.6-alpine
+    container_name: reports
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    volumes:
+      - ./results:/usr/share/nginx/html:ro
+      - ./reports/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  demo-api:
+    # Small local REST API (go-httpbin) for the api-demo.jmx example plan, so API load
+    # tests can run without hitting a public service.
+    image: mccutchen/go-httpbin:2.26.0
+    container_name: demo-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:8080"
+
+  jenkins:
+    build: ./jenkins
+    image: jmeter-monitoring/jenkins:2.580.2
+    container_name: jenkins
+    restart: unless-stopped
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    # Group that owns /var/run/docker.sock (0 on Docker Desktop; on Linux: `stat -c %g /var/run/docker.sock`).
+    group_add:
+      - "${DOCKER_GID:-0}"
+    environment:
+      CASC_JENKINS_CONFIG: /project/jenkins/casc.yaml
+      JENKINS_ADMIN_USER: ${JENKINS_ADMIN_USER:-admin}
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin}
+      # Read by jenkins/run-test-container.sh and the Jenkinsfile.
+      PERF_NETWORK: perf-net
+      JMETER_IMAGE: jmeter-monitoring/jmeter:5.6.3
+      SITESPEED_IMAGE: sitespeedio/sitespeed.io:42.10.0
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_DB: ${INFLUXDB_DB:-jmeter}
+      GRAFANA_PUBLIC_URL: ${GRAFANA_PUBLIC_URL:-http://localhost:3000}
+      REPORTS_PUBLIC_URL: ${REPORTS_PUBLIC_URL:-http://localhost:8081}
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      # Lets the pipeline start test containers on the host's Docker engine.
+      # Anything with access to this socket controls Docker on this machine: keep Jenkins local.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/project:ro
+      - ./results:/results
 
   jmeter:
     # Only runs on demand: `docker compose run --rm jmeter`
     profiles: ["test"]
     build: ./jmeter
     image: jmeter-monitoring/jmeter:5.6.3
-    container_name: jmeter
     depends_on:
       influxdb:
         condition: service_healthy
+    environment:
+      TEST_PLAN: ${TEST_PLAN:-blazedemo.jmx}
+      RUN_ID: ${RUN_ID:-}
+      APPLICATION: ${APPLICATION:-}
+      TEST_TITLE: ${TEST_TITLE:-}
+      THREADS: ${THREADS:-}
+      RAMPUP: ${RAMPUP:-}
+      DURATION: ${DURATION:-}
+      TARGET_HOST: ${TARGET_HOST:-}
+      TARGET_PORT: ${TARGET_PORT:-}
+      TARGET_PROTOCOL: ${TARGET_PROTOCOL:-}
+      MAX_ERROR_PCT: ${MAX_ERROR_PCT:-}
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_DB: ${INFLUXDB_DB:-jmeter}
     volumes:
       - ./jmeter/test-plans:/tests:ro
       - ./results:/results
-    command:
-      - -n
-      - -f
-      - -t
-      - /tests/${TEST_PLAN:-blazedemo.jmx}
-      - -l
-      - /results/results.jtl
-      - -j
-      - /results/jmeter.log
-      - -e
-      - -o
-      - /results/html-report
-      - -Jjmeter.reportgenerator.temp_dir=/tmp/jmeter-report
-      - -Jthreads=${THREADS:-5}
-      - -Jrampup=${RAMPUP:-10}
-      - -Jduration=${DURATION:-120}
-      - -Jinfluxdb.url=http://influxdb:8086/write?db=${INFLUXDB_DB:-jmeter}
-      - -Japplication=${APPLICATION:-blazedemo}
-      - -JtestTitle=${TEST_TITLE:-BlazeDemo smoke load test}
+
+  sitespeed:
+    # Only runs on demand: `docker compose run --rm sitespeed`
+    profiles: ["test"]
+    image: sitespeedio/sitespeed.io:42.10.0
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    shm_size: 1g
+    entrypoint: ["bash", "/sitespeed/run-sitespeed.sh"]
+    environment:
+      SITESPEED_URLS: ${SITESPEED_URLS:-blazedemo.txt}
+      SITESPEED_ITERATIONS: ${SITESPEED_ITERATIONS:-3}
+      SITESPEED_BROWSER: ${SITESPEED_BROWSER:-chrome}
+      SITESPEED_CONNECTIVITY: ${SITESPEED_CONNECTIVITY:-native}
+      RUN_ID: ${RUN_ID:-}
+      APPLICATION: ${APPLICATION:-}
+      TEST_TITLE: ${TEST_TITLE:-}
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_DB: ${INFLUXDB_DB:-jmeter}
+    volumes:
+      - ./sitespeed:/sitespeed:ro
+      - ./results:/results
+
+networks:
+  default:
+    # Fixed name so Jenkins can attach test containers to it.
+    name: perf-net
 
 volumes:
   influxdb-data:
   grafana-data:
+  jenkins-home:

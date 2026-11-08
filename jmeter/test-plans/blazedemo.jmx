@@ -2,7 +2,7 @@
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="BlazeDemo Load Test">
-      <stringProp name="TestPlan.comments">Books a flight on https://blazedemo.com (a public demo site for load-testing practice). Metrics go to InfluxDB via the Backend Listener. Override with -Jthreads, -Jrampup, -Jduration, -Jinfluxdb.url, -Japplication, -JtestTitle.</stringProp>
+      <stringProp name="TestPlan.comments">Books a flight on https://blazedemo.com (a public demo site for load-testing practice). Metrics go to InfluxDB via the Backend Listener. Override with -Jthreads, -Jrampup, -Jduration, -Jhost, -Jprotocol, -Jinfluxdb.url, -Japplication, -JtestTitle, -JrunId.</stringProp>
       <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
@@ -37,6 +37,16 @@
         <boolProp name="CookieManager.clearEachIteration">true</boolProp>
         <boolProp name="CookieManager.controlledByThreadGroup">false</boolProp>
       </CookieManager>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Trace context header">
+        <stringProp name="TestElement.comments">W3C trace context: each request gets a new trace id. It is stored with failure traces, so an instrumented backend's own trace can be found for any failed request.</stringProp>
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="" elementType="Header">
+            <stringProp name="Header.name">traceparent</stringProp>
+            <stringProp name="Header.value">00-${__RandomString(32,0123456789abcdef)}-${__RandomString(16,0123456789abcdef)}-01</stringProp>
+          </elementProp>
+        </collectionProp>
+      </HeaderManager>
       <hashTree/>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Flight booking users">
         <stringProp name="ThreadGroup.num_threads">${__P(threads,5)}</stringProp>
@@ -293,6 +303,11 @@
               <stringProp name="Argument.value">${__P(testTitle,BlazeDemo load test)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
+            <elementProp name="TAG_runId" elementType="Argument">
+              <stringProp name="Argument.name">TAG_runId</stringProp>
+              <stringProp name="Argument.value">${__P(runId,adhoc)}</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
             <elementProp name="eventTags" elementType="Argument">
               <stringProp name="Argument.name">eventTags</stringProp>
               <stringProp name="Argument.value"></stringProp>
@@ -303,6 +318,15 @@
         <stringProp name="classname">org.apache.jmeter.visualizers.backend.influxdb.InfluxdbBackendListenerClient</stringProp>
         <stringProp name="QUEUE_SIZE">5000</stringProp>
       </BackendListener>
+      <hashTree/>
+      <JSR223Listener guiclass="TestBeanGUI" testclass="JSR223Listener" testname="Failure traces to InfluxDB">
+        <stringProp name="TestElement.comments">Writes the full request/response of every failed sample to the InfluxDB measurement "failures" (Grafana: Request trace dashboard).</stringProp>
+        <stringProp name="scriptLanguage">groovy</stringProp>
+        <stringProp name="filename">lib/failure-trace.groovy</stringProp>
+        <stringProp name="parameters"></stringProp>
+        <stringProp name="script"></stringProp>
+        <stringProp name="cacheKey">true</stringProp>
+      </JSR223Listener>
       <hashTree/>
     </hashTree>
   </hashTree>

@@ -1,0 +1,48 @@
+# Jenkins configuration as code. Loaded at startup (CASC_JENKINS_CONFIG in docker-compose.yml).
+# After editing this file or the Jenkinsfile: Manage Jenkins > Configuration as Code > Reload,
+# or `docker compose restart jenkins`.
+jenkins:
+  systemMessage: "Performance testing. Run the <b>performance-test</b> job; results appear in Grafana."
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_USER:-admin}"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  # Safe HTML, so build descriptions can link to Grafana and the HTML reports.
+  markupFormatter:
+    rawHtml:
+      disableSyntaxHighlighting: true
+
+unclassified:
+  location:
+    url: "${JENKINS_PUBLIC_URL:-http://localhost:8080/}"
+
+jobs:
+  # Parameters live here (not in the Jenkinsfile) so "Build with Parameters" works before the first build.
+  - script: |
+      pipelineJob('performance-test') {
+        description('Runs JMeter (backend load) and/or sitespeed.io (frontend) and sends live metrics to InfluxDB/Grafana. Pipeline: jenkins/Jenkinsfile in the project folder.')
+        parameters {
+          choiceParam('TEST_TYPE', ['backend', 'frontend', 'both'], 'both = measure the frontend with sitespeed.io while JMeter puts load on the backend')
+          stringParam('TEST_PLAN', 'blazedemo.jmx', 'JMeter plan in jmeter/test-plans (blazedemo.jmx, api-demo.jmx, ...)')
+          stringParam('THREADS', '5', 'JMeter virtual users')
+          stringParam('RAMPUP', '10', 'JMeter ramp-up in seconds')
+          stringParam('DURATION', '120', 'JMeter test duration in seconds')
+          stringParam('TARGET_HOST', '', 'Override the host in the plan (empty = plan default)')
+          stringParam('MAX_ERROR_PCT', '5', 'Mark the build unstable when the JMeter error % is above this')
+          stringParam('SITESPEED_URLS', 'blazedemo.txt', 'URL file in sitespeed/urls, or space-separated URLs')
+          stringParam('SITESPEED_ITERATIONS', '3', 'Page loads per URL')
+          stringParam('RUN_LABEL', '', 'Optional label added to the run id, e.g. release-1.4')
+        }
+        definition {
+          cps {
+            script(new File('/project/jenkins/Jenkinsfile').text)
+            sandbox(true)
+          }
+        }
+      }
